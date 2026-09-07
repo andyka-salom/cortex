@@ -18,6 +18,7 @@ import { VpsService } from './vps.service';
 import { CreateVpsDto } from './dto/create-vps.dto';
 import { UpdateVpsDto } from './dto/update-vps.dto';
 import { BulkImportVpsDto } from './dto/bulk-import-vps.dto';
+import { ToggleAiAccessDto } from './dto/toggle-ai-access.dto';
 
 /**
  * RBAC (CLAUDE.md #6):
@@ -73,5 +74,16 @@ export class VpsController {
   @Roles(Role.SUPERADMIN)
   reprovision(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.vps.reprovision(id, user.id);
+  }
+
+  /** Toggle akses AI chat ke VPS ini (Fase 7). Default OFF, Superadmin only. */
+  @Patch(':id/ai-access')
+  @Roles(Role.SUPERADMIN)
+  toggleAiAccess(
+    @Param('id') id: string,
+    @Body() dto: ToggleAiAccessDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.vps.toggleAiAccess(id, dto.enabled, user.id);
   }
 }

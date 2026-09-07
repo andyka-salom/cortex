@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Cortex — Panduan langkah demi langkah memakai VPS Monitoring & Provisioning Control Plane." />
+<title>Cortex — Panduan Pemakaian</title>
+<link rel="stylesheet" href="/css/app.css" />
+<style>
+  .steps { display: flex; flex-direction: column; gap: 16px; }
+
+  .step-card {
+    display: flex;
+    gap: 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    box-shadow: var(--shadow-xs);
+  }
+
+  .step-num {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    border: 1px solid var(--accent-border);
+  }
+
+  .step-body h3 { margin: 0 0 6px; font-size: 15px; font-weight: 600; color: var(--text); }
+  .step-body p { margin: 0 0 8px; color: var(--text-secondary); font-size: 13.5px; line-height: 1.6; }
+  .step-body ul { margin: 6px 0 8px; padding-left: 18px; color: var(--text-secondary); font-size: 13.5px; line-height: 1.7; }
+  .step-body ul li code, .step-body p code { font-family: var(--font-mono); font-size: 12px; background: var(--panel-2); padding: 1px 6px; border-radius: 4px; color: var(--text); }
+
+  .role-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+  .role-table th, .role-table td { padding: 8px 12px; border-bottom: 1px solid var(--border-light); text-align: left; }
+  .role-table th { color: var(--text-muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .4px; }
+
+  .section-anchor { scroll-margin-top: 20px; }
+
+  .toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+  .toc a {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 999px;
+  }
+  .toc a:hover { background: var(--panel-2); color: var(--text); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <main class="main-content">
+    <div class="page">
+      <h1>Panduan Pemakaian</h1>
+      <p class="page-subtitle">Langkah demi langkah memakai Cortex — dari menambah VPS pertama sampai memantau alert. Sesuaikan langkah dengan role akun Anda.</p>
+
+      <nav class="toc">
+        <a href="#alur">Alur Utama</a>
+        <a href="#tambah-vps">1. Tambah VPS</a>
+        <a href="#terminal">2. Web Terminal</a>
+        <a href="#file-transfer">3. File Transfer</a>
+        <a href="#dashboard-alert">4. Dashboard &amp; Alert</a>
+        <a href="#threshold">5. Threshold &amp; Sync Prometheus</a>
+        <a href="#user">6. User &amp; Role</a>
+        <a href="#audit">7. Audit Log</a>
+        <a href="#ai-chat">8. AI Chat</a>
+        <a href="#roles">Hak Akses per Role</a>
+      </nav>
+
+      <div class="card section-anchor" id="alur" style="margin-bottom:28px">
+        <h2 style="margin-bottom:10px">Alur Utama (Happy Path)</h2>
+        <p style="color:var(--text-secondary);font-size:13.5px;line-height:1.7;margin:0">
+          Superadmin tambah VPS baru (IP + SSH key VPS yang masih bersih) →
+          sistem otomatis menjalankan provisioning (install Docker → setup user →
+          deploy Node Exporter + cAdvisor → setup firewall → daftar ke Prometheus) →
+          status VPS berubah <strong>ACTIVE</strong> → VPS langsung muncul di Dashboard &amp; Grafana →
+          semua user berwenang bisa akses terminal / upload file kapan saja → alert otomatis
+          jalan begitu metric terpantau.
+        </p>
+      </div>
+
+      <div class="steps">
+
+        <div class="step-card section-anchor" id="tambah-vps">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h3>Tambah VPS &amp; Provisioning Otomatis</h3>
+            <p><em>Role: Superadmin.</em> Buka <a href="/dashboard.html">Dashboard</a> → tombol <strong>Tambah VPS</strong>.</p>
+            <ul>
+              <li>Isi <code>Nama VPS</code> (unik), <code>IP Address</code>, <code>SSH Port</code> (default 22), <code>SSH User</code>.</li>
+              <li>Pilih <code>Environment</code> (Production/Staging) dan <code>Group</code> (mis. ERP, POS, Ecommerce) — dipakai untuk filter di Grafana.</li>
+              <li>Tempel <code>SSH Private Key</code> milik VPS target (masih fresh install Ubuntu, akses root/sudo NOPASSWD). Key langsung dienkripsi AES-256-GCM sebelum disimpan — tidak pernah ditampilkan lagi setelah tersimpan.</li>
+              <li>Klik <strong>Simpan &amp; Provision</strong> — job provisioning berjalan di background (BullMQ), status VPS berubah <span class="badge badge-status-provisioning"><span class="badge-dot"></span>PROVISIONING</span> lalu <span class="badge badge-status-active"><span class="badge-dot"></span>ACTIVE</span> kalau berhasil.</li>
+              <li>Klik nama VPS di tabel untuk lihat detail log provisioning step-by-step. Kalau gagal (status <span class="badge badge-status-error"><span class="badge-dot"></span>ERROR</span>), baca log lalu klik <strong>Re-provision</strong> — semua step idempotent, aman diulang tanpa efek samping.</li>
+              <li>Untuk banyak VPS sekaligus, pakai <strong>Bulk Import</strong> (paste JSON array VPS).</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-card section-anchor" id="terminal">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h3>Akses Web Terminal (SSH via Browser)</h3>
+            <p><em>Role: Superadmin &amp; Operator.</em> Buka <a href="/terminal.html">Terminal</a> di sidebar, atau tombol Terminal di baris VPS pada Dashboard.</p>
+            <ul>
+              <li>Pilih VPS yang statusnya <strong>ACTIVE</strong> — terminal langsung connect via SSH memakai key yang tersimpan (didekripsi hanya di memory server, tidak pernah dikirim ke browser).</li>
+              <li>Setiap session tercatat sebagai <code>TERMINAL_SESSION_START</code>/<code>END</code> di Audit Log, lengkap dengan command yang diketik (best-effort, untuk keperluan audit).</li>
+              <li>Bisa buka beberapa tab/VPS sekaligus — tiap tab = 1 session terpisah.</li>
+              <li>Viewer tidak bisa membuka terminal sama sekali (ditolak di server, bukan cuma disembunyikan di UI).</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-card section-anchor" id="file-transfer">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h3>File Transfer (Upload/Download via SFTP)</h3>
+            <p><em>Role: Superadmin &amp; Operator.</em> Buka <a href="/file-transfer.html">File Transfer</a> → pilih VPS → <strong>Hubungkan SFTP</strong>.</p>
+            <ul>
+              <li>Jelajahi direktori VPS, upload file (drag &amp; drop atau pilih file), atau download file yang ada.</li>
+              <li>Path tujuan dibatasi whitelist server (default <code>/tmp, /home, /var/www, /opt</code> — bisa diubah lewat env <code>FILE_TRANSFER_ALLOWED_PATHS</code>). Path di luar whitelist akan ditolak.</li>
+              <li>Semua transfer (siapa, kapan, file apa, ke VPS mana) tercatat otomatis dan bisa dilihat riwayatnya.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-card section-anchor" id="dashboard-alert">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h3>Pantau Dashboard &amp; Alert</h3>
+            <p><em>Role: semua (Superadmin, Operator, Viewer).</em></p>
+            <ul>
+              <li><a href="/dashboard.html">Dashboard</a> — ringkasan jumlah VPS, status Active/Error, dan alert aktif. Filter berdasarkan Environment atau Group. Auto-refresh tiap 10 detik.</li>
+              <li><a href="/alerts.html">Alerts</a> — daftar alert firing/silenced dari Alertmanager. Perlu set <code>ALERTMANAGER_URL</code> di <code>.env</code> dulu supaya terhubung; kalau kosong, halaman akan menampilkan pesan "belum terkonfigurasi" (bukan error).</li>
+              <li>Superadmin/Operator bisa acknowledge/silence alert langsung dari halaman ini.</li>
+              <li>Untuk detail metric per VPS (grafik historis CPU/RAM/Disk), buka Grafana terpisah — Cortex hanya menampilkan ringkasan.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-card section-anchor" id="threshold">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <h3>Atur Threshold Alert &amp; Sync Target Prometheus</h3>
+            <p><em>Role: Superadmin.</em> Buka <a href="/settings.html">Settings</a>.</p>
+            <ul>
+              <li><strong>Alert Thresholds</strong> — set batas CPU/RAM/Disk (%) dan durasi (menit) sebelum alert firing. Scope bisa <em>Global (semua VPS)</em> atau VPS tertentu. Klik <strong>Simpan</strong> untuk upsert — otomatis meng-generate ulang file Prometheus rules.</li>
+              <li><strong>Prometheus Targets Sync</strong> — kalau ada VPS ACTIVE yang belum muncul di Prometheus (mis. file target sempat terhapus manual), klik <strong>Re-sync Target Sekarang</strong> untuk regenerasi semua file <code>file_sd</code> dari database.</li>
+              <li>Target Prometheus tidak pernah ditulis lewat edit <code>prometheus.yml</code> manual — semua lewat file JSON di direktori <code>PROMETHEUS_TARGETS_DIR</code> yang otomatis di-reload Prometheus.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-card section-anchor" id="user">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <h3>Kelola User &amp; Role</h3>
+            <p><em>Role: Superadmin.</em> Buka <a href="/users.html">Users</a> → <strong>Tambah User</strong>.</p>
+            <ul>
+              <li>Set nama, email, password awal, dan role (Superadmin/Operator/Viewer) — lihat tabel hak akses di bawah.</li>
+              <li>Nonaktifkan (bukan hapus) user yang keluar/resign — histori audit log tetap tersimpan.</li>
+              <li>Reset password user lain kapan saja lewat tombol Reset Password di baris user.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-card section-anchor" id="audit">
+          <div class="step-num">7</div>
+          <div class="step-body">
+            <h3>Audit Log</h3>
+            <p><em>Role: Superadmin.</em> Buka <a href="/audit-log.html">Audit Log</a>.</p>
+            <ul>
+              <li>Semua aksi sensitif tercatat: provisioning, command terminal per session, file transfer, perubahan konfigurasi VPS, login/logout — append-only, tidak bisa diedit/dihapus lewat aplikasi.</li>
+              <li>Filter berdasarkan User ID, VPS ID, jenis aksi, atau rentang tanggal.</li>
+              <li>Klik <strong>Export CSV</strong> untuk keperluan audit internal atau kepatuhan.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-card section-anchor" id="ai-chat">
+          <div class="step-num">8</div>
+          <div class="step-body">
+            <h3>AI Chat (mode caveman)</h3>
+            <p><em>Role: Superadmin saja.</em> Buka <a href="/ai-chat.html">AI Chat</a>.</p>
+            <ul>
+              <li>AI menjawab dengan gaya singkat &amp; blak-blakan ("mode caveman") — tetap akurat secara teknis, cuma tidak bertele-tele.</li>
+              <li>AI bisa bantu diagnosis (mis. "cek disk usage VPS X") dan boleh <strong>mengusulkan</strong> command shell untuk dijalankan — tapi command TIDAK PERNAH langsung dieksekusi. Selalu tampil sebagai kartu konfirmasi berisi nama VPS, alasan, dan command persis, dengan tombol <strong>Jalankan</strong> / <strong>Tolak</strong>.</li>
+              <li>AI hanya boleh menyentuh VPS yang di-toggle <strong>AI Access</strong> (kolom di tabel Dashboard) — default OFF untuk semua VPS. Nyalakan hanya untuk VPS yang memang ingin dibantu AI (mis. staging), matikan untuk VPS sensitif.</li>
+              <li>Setiap command yang benar-benar dijalankan (atau ditolak) tercatat di Audit Log, lengkap dengan alasan yang diajukan AI dan hasil eksekusinya.</li>
+              <li>Riwayat chat tersimpan sementara di memory server (hilang kalau server restart) — klik <strong>Chat Baru</strong> untuk mulai sesi baru kapan saja.</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="card section-anchor" id="roles" style="margin-top:28px">
+        <h2>Hak Akses per Role</h2>
+        <div style="overflow-x:auto">
+          <table class="role-table">
+            <thead>
+              <tr><th>Fitur</th><th>Superadmin</th><th>Operator / NOC</th><th>Viewer</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Lihat Dashboard &amp; Alert</td><td>✅</td><td>✅</td><td>✅</td></tr>
+              <tr><td>Tambah / Hapus / Re-provision VPS</td><td>✅</td><td>—</td><td>—</td></tr>
+              <tr><td>Web Terminal</td><td>✅</td><td>✅</td><td>—</td></tr>
+              <tr><td>File Transfer</td><td>✅</td><td>✅</td><td>—</td></tr>
+              <tr><td>Acknowledge / Silence Alert</td><td>✅</td><td>✅</td><td>—</td></tr>
+              <tr><td>Settings (threshold, sync Prometheus)</td><td>✅</td><td>—</td><td>—</td></tr>
+              <tr><td>Kelola User &amp; Role</td><td>✅</td><td>—</td><td>—</td></tr>
+              <tr><td>Lihat Audit Log</td><td>✅</td><td>—</td><td>—</td></tr>
+              <tr><td>AI Chat &amp; toggle AI Access VPS</td><td>✅</td><td>—</td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="hint" style="margin-top:12px">Otorisasi selalu dicek ulang di server (guard), bukan cuma disembunyikan di tampilan — kalau ada tombol yang hilang, itu memang bukan hak akses role Anda.</p>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div id="toastStack" class="toast-stack"></div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/panduan.js"></script>
+</body>
+</html>

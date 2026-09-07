@@ -69,6 +69,10 @@ model Vps {
   provisionLog String?   @db.Text
   lastSeenAt   DateTime?
 
+  // AI chat (fitur chat AI) hanya boleh eksekusi command di VPS ini kalau true.
+  // Default false — Superadmin harus nyalakan eksplisit per-VPS.
+  aiAccessEnabled Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -30,26 +30,35 @@ export class AlertRulesService {
 
   /**
    * Upsert threshold untuk satu VPS (atau global jika vpsId null).
+   *
+   * CATATAN: tidak pakai `prisma.upsert()` dengan selector compound unique
+   * `vpsId_metricType` — Prisma menolak `null` sebagai bagian dari compound
+   * unique lookup ("Argument vpsId must not be null"), padahal threshold
+   * global (vpsId null) adalah kasus utama fitur ini. Jadi upsert manual:
+   * cari dulu (vpsId bisa null, `findFirst` mendukungnya), baru create/update.
    */
   async upsertThreshold(dto: AlertThresholdDto, actorId: string) {
-    const threshold = await this.prisma.alertThreshold.upsert({
-      where: {
-        vpsId_metricType: {
-          vpsId: dto.vpsId ?? (null as unknown as string),
-          metricType: dto.metricType,
-        },
-      },
-      create: {
-        vpsId: dto.vpsId ?? null,
-        metricType: dto.metricType,
-        threshold: dto.threshold,
-        durationMin: dto.durationMin ?? 5,
-      },
-      update: {
-        threshold: dto.threshold,
-        durationMin: dto.durationMin ?? 5,
-      },
+    const vpsId = dto.vpsId ?? null;
+    const existing = await this.prisma.alertThreshold.findFirst({
+      where: { vpsId, metricType: dto.metricType },
     });
+
+    const threshold = existing
+      ? await this.prisma.alertThreshold.update({
+          where: { id: existing.id },
+          data: {
+            threshold: dto.threshold,
+            durationMin: dto.durationMin ?? 5,
+          },
+        })
+      : await this.prisma.alertThreshold.create({
+          data: {
+            vpsId,
+            metricType: dto.metricType,
+            threshold: dto.threshold,
+            durationMin: dto.durationMin ?? 5,
+          },
+        });
 
     await this.audit.record({
       userId: actorId,

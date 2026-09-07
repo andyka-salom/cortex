@@ -174,6 +174,10 @@ function renderSidebar(activePage) {
 
         ${isSuperadmin ? `
           <div class="sidebar-group-title" style="margin-top:10px"><span class="link-text">Administrasi</span></div>
+          <a href="/ai-chat.html" class="sidebar-link ${activePage === 'ai-chat' ? 'active' : ''}">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M9 10h.01M12 10h.01M15 10h.01"/></svg>
+            <span class="link-text">AI Chat</span>
+          </a>
           <a href="/users.html" class="sidebar-link ${activePage === 'users' ? 'active' : ''}">
             <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             <span class="link-text">Users</span>
@@ -187,6 +191,12 @@ function renderSidebar(activePage) {
             <span class="link-text">Settings</span>
           </a>
         ` : ''}
+
+        <div class="sidebar-group-title" style="margin-top:10px"><span class="link-text">Bantuan</span></div>
+        <a href="/panduan.html" class="sidebar-link ${activePage === 'panduan' ? 'active' : ''}">
+          <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <span class="link-text">Panduan</span>
+        </a>
       </div>
       <div class="sidebar-footer">
         <div class="user-card">
@@ -241,10 +251,12 @@ function renderNavbarFallback(activePage) {
     { href: '/terminal.html', label: '💻 Terminal', key: 'terminal' },
     { href: '/file-transfer.html', label: '📁 File Transfer', key: 'file-transfer', minRole: 'OPERATOR' },
     ...(isSuperadmin ? [
+      { href: '/ai-chat.html', label: '🤖 AI Chat', key: 'ai-chat' },
       { href: '/users.html', label: '👤 Users', key: 'users' },
       { href: '/audit-log.html', label: '📋 Audit Log', key: 'audit-log' },
       { href: '/settings.html', label: '⚙️ Settings', key: 'settings' },
     ] : []),
+    { href: '/panduan.html', label: '📖 Panduan', key: 'panduan' },
   ];
 
   const canSeeFileTransfer = auth.user.role !== 'VIEWER';

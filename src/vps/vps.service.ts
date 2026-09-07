@@ -25,6 +25,7 @@ const SAFE_SELECT = {
   status: true,
   provisionLog: true,
   lastSeenAt: true,
+  aiAccessEnabled: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.VpsSelect;
@@ -148,6 +149,26 @@ export class VpsService {
       detail: `VPS ${vps.name} (${vps.ipAddress}) dihapus.`,
     });
     return { ok: true };
+  }
+
+  /**
+   * Nyalakan/matikan akses AI chat ke VPS ini (Fase 7). Default OFF —
+   * Superadmin harus mengizinkan eksplisit per-VPS sebelum AiChatService
+   * boleh mengusulkan/menjalankan command di VPS tersebut.
+   */
+  async toggleAiAccess(id: string, enabled: boolean, actorId: string) {
+    const vps = await this.getRawOrThrow(id);
+    await this.prisma.vps.update({
+      where: { id },
+      data: { aiAccessEnabled: enabled },
+    });
+    await this.audit.record({
+      userId: actorId,
+      vpsId: id,
+      action: 'VPS_AI_ACCESS_TOGGLE',
+      detail: `Akses AI chat ke VPS ${vps.name} di-${enabled ? 'AKTIFKAN' : 'MATIKAN'}.`,
+    });
+    return { ok: true, aiAccessEnabled: enabled };
   }
 
   /** Trigger ulang provisioning (tombol re-provision, PRD §5.2). */

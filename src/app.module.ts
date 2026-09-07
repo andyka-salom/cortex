@@ -12,6 +12,7 @@ import { VpsModule } from './vps/vps.module';
 import { FileTransferModule } from './file-transfer/file-transfer.module';
 import { MonitoringModule } from './monitoring/monitoring.module';
 import { UserModule } from './user/user.module';
+import { AiChatModule } from './ai-chat/ai-chat.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -38,6 +39,7 @@ import { AppController } from './app.controller';
     FileTransferModule,
     MonitoringModule,
     UserModule,
+    AiChatModule,
   ],
   controllers: [AppController],
 })

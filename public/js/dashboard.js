@@ -75,10 +75,24 @@ async function loadVps({ silent = false } = {}) {
   }
 }
 
+function renderAiAccessCell(vps) {
+  if (!isSuperadmin) {
+    return vps.aiAccessEnabled
+      ? `<span class="badge badge-status-active"><span class="badge-dot"></span>ON</span>`
+      : `<span class="badge badge-status-pending"><span class="badge-dot"></span>OFF</span>`;
+  }
+  return `
+    <label class="switch" title="Izinkan AI Chat mengusulkan command ke VPS ini">
+      <input type="checkbox" data-action="ai-access" data-id="${vps.id}" data-name="${escapeHtml(vps.name)}" ${vps.aiAccessEnabled ? 'checked' : ''} />
+      <span class="switch-slider"></span>
+    </label>
+  `;
+}
+
 function renderTable(list) {
   const body = document.getElementById('vpsTableBody');
   if (!list.length) {
-    body.innerHTML = `<tr><td colspan="7" class="empty-state">Belum ada VPS terdaftar.</td></tr>`;
+    body.innerHTML = `<tr><td colspan="8" class="empty-state">Belum ada VPS terdaftar.</td></tr>`;
     return;
   }
 
@@ -106,6 +120,7 @@ function renderTable(list) {
         <td><span class="badge badge-env-${envKey}">${vps.env}</span></td>
         <td>${escapeHtml(vps.group)}</td>
         <td><span class="badge badge-status-${statusKey}"><span class="badge-dot"></span>${STATUS_LABEL[vps.status] || vps.status}</span></td>
+        <td>${renderAiAccessCell(vps)}</td>
         <td class="text-muted">${timeAgo(vps.lastSeenAt)}</td>
         <td>
           <div class="row-actions">
@@ -137,6 +152,27 @@ function renderTable(list) {
   body.querySelectorAll('[data-action="delete"]').forEach(btn => {
     btn.addEventListener('click', () => deleteVps(btn.dataset.id, btn.dataset.name));
   });
+
+  body.querySelectorAll('[data-action="ai-access"]').forEach(input => {
+    input.addEventListener('change', () => toggleAiAccess(input));
+  });
+}
+
+async function toggleAiAccess(input) {
+  const enabled = input.checked;
+  input.disabled = true;
+  try {
+    await apiFetch(`/vps/${input.dataset.id}/ai-access`, {
+      method: 'PATCH',
+      body: JSON.stringify({ enabled }),
+    });
+    toast(`Akses AI ke "${input.dataset.name}" di-${enabled ? 'aktifkan' : 'matikan'}.`, 'success');
+  } catch (err) {
+    input.checked = !enabled;
+    toast(err.message, 'error');
+  } finally {
+    input.disabled = false;
+  }
 }
 
 async function reprovision(id, btn) {
