@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Cortex — Manajemen User dan Role." />
+<title>Cortex — User Management</title>
+<link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <main class="main-content">
+    <div class="page">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+        <div>
+          <h1>Manajemen User</h1>
+          <p class="page-subtitle" style="margin-bottom:0">Kelola akun pengguna, hak akses role, dan status aktif.</p>
+        </div>
+        <div class="toolbar-actions">
+          <button id="btnAddUser" class="btn-primary">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Tambah User
+          </button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-filters">
+          <input id="filterSearch" placeholder="Cari nama / email pengguna..." style="width:260px" />
+        </div>
+      </div>
+
+      <div id="mainAlert"></div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nama</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Dibuat</th>
+              <th style="text-align:right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="userTableBody">
+            <tr><td colspan="6" class="empty-state">Memuat data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal: Tambah / Edit User -->
+<div id="userModalOverlay" class="modal-overlay" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="userModalTitle" style="margin:0">Tambah User</h2>
+      <button class="close-x" id="closeUserModal">&times;</button>
+    </div>
+    <div id="userModalAlert"></div>
+    <form id="userForm">
+      <div class="field"><label for="inputName">Nama Lengkap</label><input id="inputName" required placeholder="John Doe" /></div>
+      <div class="field"><label for="inputEmail">Email</label><input id="inputEmail" type="email" required placeholder="john@company.com" /></div>
+      <div class="field" id="fieldPassword">
+        <label for="inputPassword">Password</label>
+        <input id="inputPassword" type="password" placeholder="Min. 8 karakter" />
+      </div>
+      <div class="field">
+        <label for="inputRole">Role</label>
+        <select id="inputRole">
+          <option value="VIEWER">Viewer</option>
+          <option value="OPERATOR">Operator</option>
+          <option value="SUPERADMIN">Superadmin</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" id="cancelUserModal">Batal</button>
+        <button type="submit" class="btn-primary" id="submitUserBtn">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Reset Password -->
+<div id="resetPwdOverlay" class="modal-overlay" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2 style="margin:0">Reset Password</h2>
+      <button class="close-x" id="closeResetPwd">&times;</button>
+    </div>
+    <div id="resetPwdAlert"></div>
+    <p class="text-muted" style="font-size:13px;margin:0 0 14px">Reset password untuk pengguna: <strong id="resetPwdEmail" style="color:var(--text)"></strong></p>
+    <div class="field">
+      <label for="newPassword">Password Baru</label>
+      <input id="newPassword" type="password" placeholder="Min. 8 karakter" />
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-secondary" id="cancelResetPwd">Batal</button>
+      <button type="submit" class="btn-primary" id="submitResetPwd">Konfirmasi Reset</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastStack" class="toast-stack"></div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/users.js"></script>
+</body>
+</html>

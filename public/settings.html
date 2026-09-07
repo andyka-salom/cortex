@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Cortex — Settings: alert threshold, konfigurasi global." />
+<title>Cortex — Settings</title>
+<link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <main class="main-content">
+    <div class="page">
+      <div style="margin-bottom:24px">
+        <h1>Settings</h1>
+        <p class="page-subtitle" style="margin-bottom:0">Konfigurasi sistem terpusat — threshold alert metrics, rules Prometheus, dan target sinkronisasi.</p>
+      </div>
+
+      <div id="mainAlert"></div>
+
+      <!-- Alert Thresholds -->
+      <section style="margin-bottom:36px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap">
+          <div>
+            <h2 style="margin:0 0 4px">Alert Thresholds</h2>
+            <p class="text-muted" style="font-size:13px;margin:0">Batas toleransi CPU/RAM/Disk yang memicu firing alert. Kosongkan jika tidak ingin memonitor metric tertentu.</p>
+          </div>
+          <button id="btnGenerateRules" class="btn-secondary btn-sm">↻ Generate Rules File</button>
+        </div>
+
+        <!-- Form tambah/edit threshold -->
+        <div class="card" style="margin-bottom:18px">
+          <h3 style="margin:0 0 14px;font-size:14px;font-weight:600;color:var(--text)">Set Alert Threshold</h3>
+          <form id="thresholdForm" style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr auto;gap:12px;align-items:end">
+            <div class="field" style="margin:0">
+              <label for="thVpsId">Scope VPS</label>
+              <select id="thVpsId">
+                <option value="">— Global (Semua VPS) —</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0">
+              <label for="thMetric">Metrik</label>
+              <select id="thMetric">
+                <option value="cpu">CPU Usage (%)</option>
+                <option value="ram">RAM Usage (%)</option>
+                <option value="disk">Disk Usage (%)</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0">
+              <label for="thThreshold">Threshold (%)</label>
+              <input id="thThreshold" type="number" min="1" max="100" value="80" />
+            </div>
+            <div class="field" style="margin:0">
+              <label for="thDuration">Durasi (menit)</label>
+              <input id="thDuration" type="number" min="1" max="60" value="5" />
+            </div>
+            <div>
+              <button type="submit" class="btn-primary" style="height:39px">Simpan</button>
+            </div>
+          </form>
+          <div id="thresholdAlert" style="margin-top:12px"></div>
+        </div>
+
+        <!-- Tabel threshold -->
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Scope / VPS</th>
+                <th>Metric</th>
+                <th>Threshold</th>
+                <th>Durasi</th>
+                <th style="text-align:right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="thresholdTable">
+              <tr><td colspan="5" class="empty-state">Memuat threshold...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Prometheus Sync -->
+      <section style="margin-bottom:36px">
+        <h2 style="margin:0 0 12px">Prometheus Targets Sync</h2>
+        <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap">
+          <div style="max-width:680px">
+            <div style="font-weight:600;font-size:14px;margin-bottom:4px;color:var(--text)">Re-sync Target Monitoring</div>
+            <div class="text-muted" style="font-size:13px;line-height:1.5">
+              Menghasilkan kembali file discovery <code>file_sd</code> untuk semua VPS yang berstatus <strong>ACTIVE</strong>. Prometheus akan secara otomatis mendeteksi perubahan target tanpa perlu restart container.
+            </div>
+          </div>
+          <button id="btnResync" class="btn-secondary" style="white-space:nowrap">↻ Re-sync Target Sekarang</button>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div id="toastStack" class="toast-stack"></div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/settings.js"></script>
+</body>
+</html>

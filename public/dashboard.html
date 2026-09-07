@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Cortex — Dashboard status VPS, provisioning, dan monitoring terpusat." />
+<title>Cortex — Dashboard VPS</title>
+<link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <main class="main-content">
+    <div class="page">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+        <div>
+          <h1>Dashboard VPS</h1>
+          <p class="page-subtitle" style="margin-bottom:0">Status semua VPS terdaftar — provisioning, monitoring, dan akses terminal.</p>
+        </div>
+        <div class="toolbar-actions">
+          <button id="btnBulkImport" class="btn-secondary" hidden>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Bulk Import
+          </button>
+          <button id="btnAddVps" class="btn-primary">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Tambah VPS
+          </button>
+        </div>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="stat-cards" id="statCards">
+        <div class="stat-card">
+          <div class="stat-label">Total VPS</div>
+          <div class="stat-value" id="statTotal">—</div>
+        </div>
+        <div class="stat-card stat-success">
+          <div class="stat-label">Active</div>
+          <div class="stat-value" id="statActive">—</div>
+        </div>
+        <div class="stat-card stat-danger">
+          <div class="stat-label">Error</div>
+          <div class="stat-value" id="statError">—</div>
+        </div>
+        <div class="stat-card stat-warning">
+          <div class="stat-label">Alert Aktif</div>
+          <div class="stat-value" id="statAlerts">—</div>
+          <div class="stat-sub" id="statAlertsSub"></div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="toolbar-filters">
+          <select id="filterEnv">
+            <option value="">Semua Environment</option>
+            <option value="PRODUCTION">Production</option>
+            <option value="STAGING">Staging</option>
+          </select>
+          <input id="filterGroup" placeholder="Filter group (ERP, POS, ...)" style="width:200px" />
+          <button id="btnRefresh" class="btn-secondary btn-sm">↻ Refresh</button>
+        </div>
+      </div>
+
+      <div id="tableWrap" class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nama</th>
+              <th>Alamat</th>
+              <th>Environment</th>
+              <th>Group</th>
+              <th>Status</th>
+              <th>Terakhir Terlihat</th>
+              <th style="text-align:right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="vpsTableBody">
+            <tr><td colspan="7" class="empty-state">Memuat data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal: Tambah VPS -->
+<div id="addVpsOverlay" class="modal-overlay" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2 style="margin:0">Tambah VPS</h2>
+      <button class="close-x" id="closeAddVps">&times;</button>
+    </div>
+    <div id="addVpsAlert"></div>
+    <form id="addVpsForm">
+      <div class="field"><label for="vpsName">Nama VPS</label><input id="vpsName" required maxlength="64" placeholder="erp-jakarta-01" /></div>
+      <div class="field"><label for="vpsIp">IP Address</label><input id="vpsIp" required placeholder="10.0.0.5" /></div>
+      <div class="field"><label for="vpsPort">SSH Port</label><input id="vpsPort" type="number" min="1" max="65535" value="22" /></div>
+      <div class="field"><label for="vpsUser">SSH User</label><input id="vpsUser" required placeholder="deploy" /></div>
+      <div class="field"><label for="vpsEnv">Environment</label>
+        <select id="vpsEnv"><option value="PRODUCTION">Production</option><option value="STAGING">Staging</option></select>
+      </div>
+      <div class="field"><label for="vpsGroup">Group</label><input id="vpsGroup" required maxlength="64" placeholder="ERP / POS / Ecommerce" /></div>
+      <div class="field">
+        <label for="vpsKey">SSH Private Key</label>
+        <textarea id="vpsKey" required placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;...&#10;-----END OPENSSH PRIVATE KEY-----"></textarea>
+        <div class="hint">Dienkripsi (AES-256-GCM) sebelum disimpan di database. Tidak pernah ditampilkan kembali.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" id="cancelAddVps">Batal</button>
+        <button type="submit" class="btn-primary" id="submitAddVps">Simpan &amp; Provision</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Bulk Import VPS -->
+<div id="bulkImportOverlay" class="modal-overlay" hidden>
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h2 style="margin:0">Bulk Import VPS</h2>
+      <button class="close-x" id="closeBulkImport">&times;</button>
+    </div>
+    <div id="bulkImportAlert"></div>
+    <p class="text-muted" style="font-size:13px;margin:0 0 14px">
+      Paste JSON array VPS. Setiap objek membutuhkan field: <code>name, ipAddress, sshUser, privateKey, env, group</code>.
+    </p>
+    <div class="field">
+      <label for="bulkJson">JSON Array VPS</label>
+      <textarea id="bulkJson" style="min-height:170px;font-size:12px" placeholder='[
+  {
+    "name": "erp-server-01",
+    "ipAddress": "10.0.0.5",
+    "sshPort": 22,
+    "sshUser": "deploy",
+    "privateKey": "-----BEGIN OPENSSH PRIVATE KEY-----\n...",
+    "env": "PRODUCTION",
+    "group": "ERP"
+  }
+]'></textarea>
+    </div>
+    <div id="bulkResultWrap" hidden>
+      <hr class="divider" />
+      <div id="bulkResults"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-secondary" id="cancelBulkImport">Tutup</button>
+      <button type="button" class="btn-primary" id="submitBulkImport">Mulai Import</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastStack" class="toast-stack"></div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/dashboard.js"></script>
+</body>
+</html>

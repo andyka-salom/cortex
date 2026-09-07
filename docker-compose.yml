@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cortex-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cortex
+      POSTGRES_PASSWORD: cortex
+      POSTGRES_DB: cortex
+    ports:
+      # Bind IPv4 host 5434 → hindari bentrok Postgres lain (docker 5432 + native 5433).
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cortex"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: cortex-redis
+    restart: unless-stopped
+    ports:
+      # Bind IPv4 host 6381 → hindari bentrok Redis lain di 6379.
+      - "127.0.0.1:6381:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Control plane app. Uncomment untuk jalan penuh via Docker;
+  # saat dev pakai `npm run start:dev` di host cukup postgres + redis di atas.
+  # app:
+  #   build: .
+  #   container_name: cortex-app
+  #   restart: unless-stopped
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   env_file: .env
+  #   environment:
+  #     DATABASE_URL: postgresql://cortex:cortex@postgres:5432/cortex?schema=public
+  #     REDIS_HOST: redis
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ./data/prometheus/targets:/app/data/prometheus/targets
+
+volumes:
+  pgdata:
+  redisdata:

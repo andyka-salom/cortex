@@ -1,0 +1,11 @@
+import { Module } from '@nestjs/common';
+import { UserService } from './user.service';
+import { UserController } from './user.controller';
+import { AuditLogModule } from '../audit-log/audit-log.module';
+
+@Module({
+  imports: [AuditLogModule],
+  providers: [UserService],
+  controllers: [UserController],
+})
+export class UserModule {}

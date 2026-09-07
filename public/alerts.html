@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Cortex — Alert aktif dari Alertmanager." />
+<title>Cortex — Alerts</title>
+<link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <main class="main-content">
+    <div class="page">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+        <div>
+          <h1>Alerts</h1>
+          <p class="page-subtitle" style="margin-bottom:0">Alert aktif dari Alertmanager. Silence alert yang tidak relevan untuk sementara waktu.</p>
+        </div>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="stat-cards">
+        <div class="stat-card stat-danger">
+          <div class="stat-label">Firing</div>
+          <div class="stat-value" id="statFiring">—</div>
+        </div>
+        <div class="stat-card stat-warning">
+          <div class="stat-label">Silenced</div>
+          <div class="stat-value" id="statSilenced">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Alert</div>
+          <div class="stat-value" id="statTotal">—</div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="toolbar-filters">
+          <select id="filterStatus" style="width:auto">
+            <option value="">Semua Status</option>
+            <option value="firing">Firing</option>
+            <option value="resolved">Resolved</option>
+            <option value="silenced">Silenced</option>
+          </select>
+          <input id="filterSearch" placeholder="Cari label / anotasi..." style="width:240px" />
+          <button id="btnRefresh" class="btn-secondary btn-sm">↻ Refresh</button>
+        </div>
+      </div>
+
+      <div id="mainAlert"></div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Alert</th>
+              <th>Severity</th>
+              <th>Labels</th>
+              <th>Mulai</th>
+              <th>Status</th>
+              <th style="text-align:right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="alertTableBody">
+            <tr><td colspan="6" class="empty-state">Memuat data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal: Silence Alert -->
+<div id="silenceOverlay" class="modal-overlay" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2 style="margin:0">Silence Alert</h2>
+      <button class="close-x" id="closeSilence">&times;</button>
+    </div>
+    <div id="silenceAlert"></div>
+    <div class="field">
+      <label for="silenceComment">Komentar / Alasan</label>
+      <input id="silenceComment" placeholder="Maintenance terjadwal, false positive, dll." />
+    </div>
+    <div class="field">
+      <label for="silenceDuration">Durasi (jam)</label>
+      <input id="silenceDuration" type="number" min="1" max="168" value="4" />
+    </div>
+    <div id="silenceMatchersInfo" class="hint" style="margin-bottom:12px"></div>
+    <div class="modal-footer">
+      <button type="button" class="btn-secondary" id="cancelSilence">Batal</button>
+      <button type="button" class="btn-primary" id="submitSilence">Aktifkan Silence</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastStack" class="toast-stack"></div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/alerts.js"></script>
+</body>
+</html>

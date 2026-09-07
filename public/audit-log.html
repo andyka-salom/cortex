@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Cortex — Audit Log semua aksi sensitif." />
+<title>Cortex — Audit Log</title>
+<link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <main class="main-content">
+    <div class="page">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+        <div>
+          <h1>Audit Log</h1>
+          <p class="page-subtitle" style="margin-bottom:0">Riwayat semua aktivitas sensitif: provisioning, terminal, file transfer, autentikasi, dan konfigurasi.</p>
+        </div>
+        <div class="toolbar-actions">
+          <button id="btnExport" class="btn-secondary">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="card" style="margin-bottom:18px;padding:16px 20px">
+        <div class="toolbar-filters" style="flex-wrap:wrap;gap:10px">
+          <input id="filterUserId" placeholder="Filter User ID..." style="width:170px" />
+          <input id="filterVpsId" placeholder="Filter VPS ID..." style="width:170px" />
+          <select id="filterAction" style="width:auto;min-width:170px">
+            <option value="">Semua Aksi</option>
+            <option>LOGIN</option>
+            <option>LOGOUT</option>
+            <option>VPS_CREATE</option>
+            <option>VPS_UPDATE</option>
+            <option>VPS_DELETE</option>
+            <option>VPS_REPROVISION</option>
+            <option>VPS_BULK_IMPORT</option>
+            <option>PROVISION_START</option>
+            <option>PROVISION_DONE</option>
+            <option>PROVISION_ERROR</option>
+            <option>TERMINAL_SESSION_START</option>
+            <option>TERMINAL_SESSION_END</option>
+            <option>FILE_UPLOAD</option>
+            <option>FILE_DOWNLOAD</option>
+            <option>USER_CREATE</option>
+            <option>USER_UPDATE</option>
+            <option>USER_PASSWORD_RESET</option>
+            <option>USER_DEACTIVATE</option>
+            <option>USER_ACTIVATE</option>
+            <option>ALERT_SILENCED</option>
+            <option>ALERT_THRESHOLD_SET</option>
+          </select>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input id="filterFrom" type="date" style="width:auto" />
+            <span class="text-muted">—</span>
+            <input id="filterTo" type="date" style="width:auto" />
+          </div>
+          <button id="btnFilter" class="btn-primary btn-sm">Filter Log</button>
+          <button id="btnReset" class="btn-secondary btn-sm">Reset</button>
+        </div>
+      </div>
+
+      <div id="mainAlert"></div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Waktu</th>
+              <th>User</th>
+              <th>VPS</th>
+              <th>Aksi</th>
+              <th>Detail</th>
+            </tr>
+          </thead>
+          <tbody id="logTableBody">
+            <tr><td colspan="5" class="empty-state">Klik Filter untuk memuat log.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </main>
+</div>
+
+<div id="toastStack" class="toast-stack"></div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/audit-log.js"></script>
+</body>
+</html>

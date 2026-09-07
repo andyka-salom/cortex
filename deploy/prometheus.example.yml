@@ -1,0 +1,21 @@
+# Contoh konfigurasi Prometheus untuk dipakai bersama control plane.
+# Control plane menulis file target ke PROMETHEUS_TARGETS_DIR (file_sd),
+# Prometheus auto-reload — JANGAN edit file ini per VPS (CLAUDE.md #5).
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Target VPS (node_exporter + cadvisor) di-generate otomatis oleh control plane.
+  - job_name: 'vps-targets'
+    file_sd_configs:
+      - files:
+          - '/etc/prometheus/targets/*.json'
+        refresh_interval: 30s
+
+  # Control plane app itu sendiri (PRD §7 — app ini juga dimonitor).
+  - job_name: 'control-plane'
+    metrics_path: /api/health
+    static_configs:
+      - targets: ['host.docker.internal:3000']

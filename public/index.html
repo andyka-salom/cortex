@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Cortex — Login ke VPS Monitoring & Provisioning Control Plane." />
+<title>Cortex — Login Control Plane</title>
+<link rel="stylesheet" href="/css/app.css" />
+<style>
+  .login-wrapper {
+    width: 100%;
+    max-width: 400px;
+  }
+  .login-card {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 36px 32px;
+    box-shadow: var(--shadow-lg);
+  }
+  .login-brand {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .brand-logo-wrap {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 16px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    box-shadow: 0 10px 20px rgba(79, 70, 229, 0.28);
+  }
+  .login-brand .logo {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  .login-brand .tagline {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    line-height: 1.4;
+  }
+  #loginBtn {
+    width: 100%;
+    justify-content: center;
+    margin-top: 10px;
+    padding: 11px 16px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .field input {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+<div class="center-page">
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="brand-logo-wrap">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="logo">Cortex</div>
+        <div class="tagline">VPS Monitoring &amp; Provisioning Control Plane</div>
+      </div>
+
+      <div id="alertBox"></div>
+
+      <form id="loginForm">
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" autocomplete="username" placeholder="admin@example.com" required />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" required />
+        </div>
+        <button id="loginBtn" type="submit" class="btn-primary">Masuk ke Dashboard</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script>
+  // Sudah login? langsung ke dashboard.
+  if (getAuth()?.token) window.location.href = '/dashboard.html';
+
+  const form = document.getElementById('loginForm');
+  const alertBox = document.getElementById('alertBox');
+  const btn = document.getElementById('loginBtn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    alertBox.innerHTML = '';
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Memproses...';
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: document.getElementById('email').value.trim(),
+          password: document.getElementById('password').value,
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        throw new Error((body && body.message) || 'Login gagal.');
+      }
+      localStorage.setItem('cortex_auth', JSON.stringify({ token: body.accessToken, user: body.user }));
+      window.location.href = '/dashboard.html';
+    } catch (err) {
+      alertBox.innerHTML = `<div class="alert alert-error">${escapeHtml(err.message)}</div>`;
+      btn.disabled = false;
+      btn.textContent = 'Masuk ke Dashboard';
+    }
+  });
+</script>
+</body>
+</html>

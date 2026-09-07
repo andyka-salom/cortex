@@ -1,0 +1,28 @@
+# dependencies
+/node_modules
+
+# build
+/dist
+/build
+
+# env & secrets
+.env
+.env.local
+*.pem
+*.key
+
+# prometheus generated targets (runtime)
+/data/prometheus/targets/*.json
+
+# logs
+*.log
+npm-debug.log*
+
+# test
+/coverage
+
+# editor
+.idea
+.vscode
+*.swp
+.DS_Store

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cortex — Terminal SSH</title>
+<link rel="stylesheet" href="/css/app.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+<style>
+  html, body { height: 100%; margin: 0; background: var(--bg); }
+  .term-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 20px;
+    background: #0f172a;
+    border-bottom: 1px solid #1e293b;
+    flex-shrink: 0;
+  }
+  .term-header .vps-name { font-weight: 600; font-size: 14px; color: #f8fafc; }
+  .term-header .spacer { flex: 1; }
+  .term-btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #1e293b;
+    color: #f1f5f9;
+    border: 1px solid #334155;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .term-btn-back:hover {
+    background: #334155;
+    text-decoration: none;
+  }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .status-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .status-connecting { background: rgba(245,158,11,0.18); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+  .status-connecting .dot { background: #f59e0b; animation: pulse 1.2s infinite; }
+  .status-connected { background: rgba(16,185,129,0.18); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+  .status-connected .dot { background: #10b981; }
+  .status-disconnected { background: rgba(239,68,68,0.18); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+  .status-disconnected .dot { background: #ef4444; }
+  .term-select-vps {
+    background: #1e293b;
+    color: #f8fafc;
+    border: 1px solid #334155;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+  }
+  .term-select-vps option {
+    background: #0f172a;
+    color: #f8fafc;
+  }
+  #termContainer { flex: 1; min-height: 0; padding: 12px 16px; background: #0b0f19; }
+  #termContainer .xterm { height: 100%; }
+</style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main-content" style="padding: 0; display: flex; flex-direction: column; overflow: hidden; height: 100vh; background: #0b0f19;">
+    <div class="term-header">
+      <a href="/dashboard.html" class="term-btn-back">&larr; Kembali</a>
+  
+  <select id="selectVps" class="term-select-vps" style="display:none;min-width:200px">
+    <option value="">— Pilih VPS —</option>
+  </select>
+
+  <span class="vps-name" id="vpsNameLabel">—</span>
+  <span class="spacer"></span>
+  
+  <button id="btnConnect" class="btn-primary btn-sm" style="display:none">Connect</button>
+
+  <span id="statusPill" class="status-pill status-disconnected"><span class="dot"></span><span id="statusText">disconnected</span></span>
+  <button id="btnReconnect" class="btn-secondary btn-sm" style="background:#1e293b;border-color:#334155;color:#fff" hidden>Sambungkan Ulang</button>
+</div>
+    <div id="termContainer"></div>
+  </main>
+</div>
+
+<div id="toastStack" class="toast-stack"></div>
+
+<script src="/js/auth.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.5/dist/socket.io.min.js"></script>
+<script src="/js/terminal.js"></script>
+</body>
+</html>

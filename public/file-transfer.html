@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Cortex — File Transfer SFTP ke VPS terdaftar." />
+<title>Cortex — File Transfer</title>
+<link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <main class="main-content">
+    <div class="page">
+      <div style="margin-bottom:20px">
+        <h1>File Transfer</h1>
+        <p class="page-subtitle" style="margin-bottom:0">Upload, download, dan jelajahi file di VPS secara aman via SFTP.</p>
+      </div>
+
+      <!-- Pilih VPS & Actions -->
+      <div class="toolbar">
+        <div class="toolbar-filters">
+          <select id="selectVps" style="min-width:240px">
+            <option value="">— Pilih VPS —</option>
+          </select>
+          <button id="btnConnect" class="btn-primary" disabled>Hubungkan SFTP</button>
+        </div>
+        <div class="toolbar-actions" id="transferActions" hidden>
+          <button id="btnUpload" class="btn-secondary">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload File
+          </button>
+          <button id="btnDownload" class="btn-secondary" disabled>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download
+          </button>
+          <button id="btnRefreshDir" class="btn-secondary btn-sm" title="Refresh Direktori">↻</button>
+        </div>
+      </div>
+
+      <!-- File Manager -->
+      <div id="fileManagerWrap" hidden>
+        <div class="file-manager">
+          <!-- Panel kiri: tree / navigation -->
+          <div class="file-panel">
+            <div class="file-panel-header">Direktori</div>
+            <div id="pathBar" class="path-bar"><span class="text-muted">/</span></div>
+            <div class="file-list" id="dirList">
+              <div class="empty-state">Pilih VPS dan klik Hubungkan.</div>
+            </div>
+          </div>
+
+          <!-- Panel kanan: konten folder aktif -->
+          <div class="file-panel">
+            <div class="file-panel-header">
+              <span>File</span>
+              <span id="fileCount" class="text-muted" style="font-size:11px;text-transform:none;letter-spacing:0"></span>
+            </div>
+            <div class="file-list" id="fileList">
+              <div class="empty-state">Pilih direktori di panel kiri.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upload drop zone -->
+        <div style="margin-top:16px">
+          <div class="drop-zone" id="dropZone">
+            <div style="font-weight:500">Drag & drop file ke sini, atau klik untuk memilih file</div>
+            <div style="font-size:12px;margin-top:4px;color:var(--text-muted)">Target upload: <span id="uploadTargetPath" class="mono">/tmp</span></div>
+          </div>
+          <input type="file" id="fileInput" multiple style="display:none" />
+        </div>
+
+        <!-- Riwayat transfer -->
+        <div style="margin-top:28px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <h2 style="margin:0">Riwayat Transfer</h2>
+            <button id="btnLoadLogs" class="btn-secondary btn-sm">Muat Riwayat</button>
+          </div>
+          <div id="transferLogsWrap" class="table-wrap" hidden>
+            <table>
+              <thead><tr><th>Waktu</th><th>User</th><th>Arah</th><th>Path</th><th>Ukuran</th></tr></thead>
+              <tbody id="transferLogs"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="mainAlert"></div>
+    </div>
+  </main>
+</div>
+
+<div id="toastStack" class="toast-stack"></div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/file-transfer.js"></script>
+</body>
+</html>

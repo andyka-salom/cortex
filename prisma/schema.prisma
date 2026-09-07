@@ -1,0 +1,151 @@
+// Prisma schema — VPS Monitoring & Provisioning Control Plane
+// Data model mengikuti PRD §8. SSH private key disimpan terenkripsi (AES-256-GCM),
+// tidak pernah plaintext (lihat src/common/crypto/crypto.util.ts).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPERADMIN
+  OPERATOR
+  VIEWER
+}
+
+enum VpsStatus {
+  PENDING
+  PROVISIONING
+  ACTIVE
+  ERROR
+}
+
+enum Environment {
+  PRODUCTION
+  STAGING
+}
+
+enum TransferDirection {
+  UPLOAD
+  DOWNLOAD
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(VIEWER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  auditLogs        AuditLog[]
+  fileTransfers    FileTransferLog[]
+  terminalSessions TerminalSession[]
+
+  @@map("users")
+}
+
+model Vps {
+  id       String @id @default(uuid())
+  name     String @unique
+  ipAddress String
+  sshPort  Int    @default(22)
+  sshUser  String
+
+  // Terenkripsi at-rest (AES-256-GCM). Format: iv:authTag:ciphertext (hex).
+  // JANGAN pernah kirim field ini ke frontend / audit log.
+  sshPrivateKeyEnc String
+
+  env    Environment @default(PRODUCTION)
+  group  String // ERP | POS | Ecommerce | dst.
+  status VpsStatus   @default(PENDING)
+
+  provisionLog String?   @db.Text
+  lastSeenAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  auditLogs        AuditLog[]
+  fileTransfers    FileTransferLog[]
+  terminalSessions TerminalSession[]
+  alertThresholds  AlertThreshold[]
+
+  @@index([env, group])
+  @@map("vps")
+}
+
+// Audit log append-only. Jangan pernah expose endpoint update/delete.
+model AuditLog {
+  id      String @id @default(uuid())
+  userId  String?
+  vpsId   String?
+  action  String // ex: VPS_CREATE, PROVISION_START, TERMINAL_CMD, FILE_UPLOAD, LOGIN
+  detail  String @db.Text
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  vps  Vps?  @relation(fields: [vpsId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([vpsId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model FileTransferLog {
+  id         String            @id @default(uuid())
+  userId     String
+  vpsId      String
+  direction  TransferDirection
+  remotePath String
+  fileSize   BigInt
+  createdAt  DateTime          @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vps  Vps  @relation(fields: [vpsId], references: [id], onDelete: Cascade)
+
+  @@index([vpsId])
+  @@map("file_transfer_logs")
+}
+
+model TerminalSession {
+  id         String    @id @default(uuid())
+  userId     String
+  vpsId      String
+  startedAt  DateTime  @default(now())
+  endedAt    DateTime?
+  commandLog String    @default("") @db.Text
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vps  Vps  @relation(fields: [vpsId], references: [id], onDelete: Cascade)
+
+  @@index([vpsId])
+  @@map("terminal_sessions")
+}
+
+// Konfigurasi threshold alert per VPS atau global (Fase 6 — PRD §5.5).
+// Digunakan oleh alert-rules.service.ts untuk generate Prometheus rules.
+model AlertThreshold {
+  id          String  @id @default(uuid())
+  vpsId       String? // null = threshold global (berlaku semua VPS)
+  metricType  String  // cpu | ram | disk
+  threshold   Float   // 0-100 persen
+  durationMin Int     @default(5)  // durasi trigger sebelum alert fire
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vps Vps? @relation(fields: [vpsId], references: [id], onDelete: Cascade)
+
+  @@unique([vpsId, metricType])
+  @@index([vpsId])
+  @@map("alert_thresholds")
+}
