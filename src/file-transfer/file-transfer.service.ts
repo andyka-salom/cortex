@@ -44,6 +44,11 @@ export class FileTransferService {
     this.allowedPaths = raw.split(',').map((p) => p.trim());
   }
 
+  /** Daftar root path yang diizinkan — dipakai UI untuk pintasan & navigasi. */
+  getAllowedPaths(): string[] {
+    return [...this.allowedPaths];
+  }
+
   /**
    * Validasi remote path terhadap whitelist (CLAUDE.md #4).
    * Throw BadRequestException jika tidak diizinkan.

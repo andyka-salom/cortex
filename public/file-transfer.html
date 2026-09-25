@@ -41,6 +41,14 @@
 
       <!-- File Manager -->
       <div id="fileManagerWrap" hidden>
+        <!-- Navigasi cepat: pintasan ke root yang diizinkan + ketik path langsung -->
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+          <div id="pathShortcuts" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+          <form id="pathForm" style="display:flex;gap:6px;flex:1;min-width:260px">
+            <input id="pathInput" class="mono" placeholder="/var/www/..." autocomplete="off" spellcheck="false" />
+            <button type="submit" class="btn-secondary btn-sm">Buka</button>
+          </form>
+        </div>
         <div class="file-manager">
           <!-- Panel kiri: tree / navigation -->
           <div class="file-panel">
@@ -67,7 +75,7 @@
         <div style="margin-top:16px">
           <div class="drop-zone" id="dropZone">
             <div style="font-weight:500">Drag & drop file ke sini, atau klik untuk memilih file</div>
-            <div style="font-size:12px;margin-top:4px;color:var(--text-muted)">Target upload: <span id="uploadTargetPath" class="mono">/tmp</span></div>
+            <div style="font-size:12px;margin-top:4px;color:var(--text-muted)">Target upload: <span id="uploadTargetPath" class="mono">—</span></div>
           </div>
           <input type="file" id="fileInput" multiple style="display:none" />
         </div>

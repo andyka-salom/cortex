@@ -28,6 +28,12 @@ import { FileTransferService } from './file-transfer.service';
 export class FileTransferController {
   constructor(private readonly fileTransfer: FileTransferService) {}
 
+  /** Root path yang diizinkan (FILE_TRANSFER_ALLOWED_PATHS) — untuk navigasi UI. */
+  @Get('allowed-paths')
+  allowedPaths() {
+    return this.fileTransfer.getAllowedPaths();
+  }
+
   /** List isi direktori remote VPS. */
   @Get(':vpsId/list')
   listDir(

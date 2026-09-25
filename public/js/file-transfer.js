@@ -15,9 +15,12 @@ function initFiletransfer() {
   let currentVpsId = null;
   let currentPath = '/home';
   let selectedFile = null;
+  // Root path yang diizinkan server (FILE_TRANSFER_ALLOWED_PATHS); diisi dari API.
+  let allowedPaths = ['/tmp', '/home'];
+  const vpsById = {};
 
-  // Load daftar VPS
-  loadVpsList(paramVpsId);
+  // Allowed paths dulu, baru daftar VPS (auto-connect butuh keduanya).
+  loadAllowedPaths().then(() => loadVpsList(paramVpsId));
 
   document.getElementById('selectVps').addEventListener('change', function () {
     document.getElementById('btnConnect').disabled = !this.value;
@@ -27,11 +30,77 @@ function initFiletransfer() {
   document.getElementById('btnConnect').addEventListener('click', () => {
     currentVpsId = document.getElementById('selectVps').value;
     if (!currentVpsId) return;
-    currentPath = '/home';
+    openFileManager();
+  });
+
+  document.getElementById('pathForm').addEventListener('submit', e => {
+    e.preventDefault();
+    if (!currentVpsId) return toast('Pilih VPS terlebih dahulu.', 'error');
+    const target = normalizePath(document.getElementById('pathInput').value);
+    if (!isAllowed(target)) {
+      return toast(`Path "${target}" tidak diizinkan. Path yang diizinkan: ${allowedPaths.join(', ')}`, 'error', 5000);
+    }
+    loadDir(currentVpsId, target);
+  });
+
+  async function loadAllowedPaths() {
+    try {
+      const list = await apiFetch('/file-transfer/allowed-paths');
+      if (Array.isArray(list) && list.length) allowedPaths = list.map(normalizePath);
+    } catch (err) {
+      toast('Gagal load daftar path yang diizinkan: ' + err.message, 'error');
+    }
+  }
+
+  /** Tampilkan file manager & buka home user SSH (atau root pertama yang diizinkan). */
+  function openFileManager() {
     document.getElementById('fileManagerWrap').hidden = false;
     document.getElementById('transferActions').hidden = false;
-    loadDir(currentVpsId, currentPath);
-  });
+    renderShortcuts();
+    loadDir(currentVpsId, startPathFor(vpsById[currentVpsId]));
+  }
+
+  function homePathFor(vps) {
+    if (!vps || !vps.sshUser) return null;
+    return vps.sshUser === 'root' ? '/root' : `/home/${vps.sshUser}`;
+  }
+
+  function startPathFor(vps) {
+    const home = homePathFor(vps);
+    return home && isAllowed(home) ? home : allowedPaths[0];
+  }
+
+  function renderShortcuts() {
+    const home = homePathFor(vpsById[currentVpsId]);
+    const items = [];
+    if (home && isAllowed(home)) items.push({ label: `~ ${home}`, path: home });
+    allowedPaths.forEach(p => {
+      if (p !== home) items.push({ label: p, path: p });
+    });
+    const wrap = document.getElementById('pathShortcuts');
+    wrap.innerHTML = items
+      .map(i => `<button type="button" class="btn-secondary btn-sm mono" data-shortcut="${escapeHtml(i.path)}">${escapeHtml(i.label)}</button>`)
+      .join('');
+    wrap.querySelectorAll('[data-shortcut]').forEach(el => {
+      el.addEventListener('click', () => loadDir(currentVpsId, el.dataset.shortcut));
+    });
+  }
+
+  /** Normalisasi path (hapus //, ., .., trailing slash) — validasi final tetap di server. */
+  function normalizePath(p) {
+    const out = [];
+    String(p || '').trim().split('/').forEach(seg => {
+      if (!seg || seg === '.') return;
+      if (seg === '..') out.pop();
+      else out.push(seg);
+    });
+    return '/' + out.join('/');
+  }
+
+  /** Sama dengan validatePath di server: path == root atau di bawah root yang diizinkan. */
+  function isAllowed(p) {
+    return allowedPaths.some(a => p === a || p.startsWith(a.endsWith('/') ? a : a + '/'));
+  }
 
   document.getElementById('btnRefreshDir').addEventListener('click', () => {
     if (currentVpsId) loadDir(currentVpsId, currentPath);
@@ -69,6 +138,7 @@ function initFiletransfer() {
     try {
       const list = await apiFetch('/vps');
       const sel = document.getElementById('selectVps');
+      list.forEach(v => { vpsById[v.id] = v; });
       sel.innerHTML = '<option value="">— Pilih VPS —</option>' +
         list.map(v => `<option value="${v.id}"${v.id === preSelectId ? ' selected' : ''}>${escapeHtml(v.name)} (${escapeHtml(v.ipAddress)})</option>`).join('');
 
@@ -76,9 +146,7 @@ function initFiletransfer() {
         document.getElementById('btnConnect').disabled = false;
         // Auto-connect jika dari dashboard
         currentVpsId = preSelectId;
-        document.getElementById('fileManagerWrap').hidden = false;
-        document.getElementById('transferActions').hidden = false;
-        loadDir(currentVpsId, currentPath);
+        openFileManager();
         if (paramName) document.title = `Cortex — File Transfer: ${paramName}`;
       }
     } catch (err) {
@@ -89,6 +157,7 @@ function initFiletransfer() {
   async function loadDir(vpsId, remotePath) {
     currentPath = remotePath;
     renderPathBar(remotePath);
+    document.getElementById('pathInput').value = remotePath;
     document.getElementById('uploadTargetPath').textContent = remotePath;
     selectedFile = null;
     document.getElementById('btnDownload').disabled = true;
@@ -111,7 +180,8 @@ function initFiletransfer() {
 
     // Panel kiri: .. + subdirektori
     const dirHtml = [
-      currentPath !== '/' ? `<div class="file-item" data-path="${escapeHtml(parentPath(currentPath))}"><span class="file-icon">⬆</span><span class="file-name">..</span></div>` : '',
+      // ".." hanya kalau parent masih di dalam path yang diizinkan.
+      currentPath !== '/' && isAllowed(parentPath(currentPath)) ? `<div class="file-item" data-path="${escapeHtml(parentPath(currentPath))}"><span class="file-icon">⬆</span><span class="file-name">..</span></div>` : '',
       ...dirs.map(d => `<div class="file-item" data-path="${escapeHtml(currentPath.replace(/\/$/, '') + '/' + d.name)}"><span class="file-icon">📁</span><span class="file-name">${escapeHtml(d.name)}</span></div>`),
     ].join('');
     const dirList = document.getElementById('dirList');
@@ -145,13 +215,16 @@ function initFiletransfer() {
   }
 
   function renderPathBar(remotePath) {
+    // Segmen di luar path yang diizinkan (mis. "/" atau "/var") tampil tapi tidak bisa diklik.
+    const segment = (p, label) => isAllowed(p)
+      ? `<span class="path-segment" data-p="${escapeHtml(p)}">${escapeHtml(label)}</span>`
+      : `<span class="text-muted">${escapeHtml(label)}</span>`;
     const parts = remotePath.split('/').filter(Boolean);
-    let html = `<span class="path-segment" data-p="/">/</span>`;
+    let html = segment('/', '/');
     let cumulative = '';
-    parts.forEach((part, i) => {
+    parts.forEach(part => {
       cumulative += '/' + part;
-      const p = cumulative;
-      html += `<span class="path-sep">/</span><span class="path-segment" data-p="${escapeHtml(p)}">${escapeHtml(part)}</span>`;
+      html += `<span class="path-sep">/</span>${segment(cumulative, part)}`;
     });
     const bar = document.getElementById('pathBar');
     bar.innerHTML = html;
